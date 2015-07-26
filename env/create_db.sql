@@ -1,12 +1,13 @@
-DROP TABLE IF EXISTS users;
-
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS configuration CASCADE;
+DROP TABLE IF EXISTS sessions CASCADE;
 CREATE TABLE users(
        id SERIAL PRIMARY KEY,
        username VARCHAR UNIQUE,
        password VARCHAR       
 );
 
-DROP TABLE IF EXISTS configuration;
+
 CREATE TABLE configuration(
        id SERIAL PRIMARY KEY,
        user_id INT,
@@ -15,3 +16,11 @@ CREATE TABLE configuration(
        username VARCHAR,
        FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+
+create table sessions(
+       session_id VARCHAR,
+       user_id INT,
+       FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
