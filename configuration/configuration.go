@@ -64,11 +64,13 @@ func (cc *ConfigurationController) Add(configs ...Configuration) (names []string
 	)
 	tx, err = cc.DB.Begin()
 	if err != nil {
+		tx.Rollback()
 		return names, err
 	}
 
 	stmt, err = tx.Prepare("INSERT INTO configurations(config_name, host_name, username, port) VALUES($1,$2,$3,$4)")
 	if err != nil {
+		tx.Rollback()
 		return names, err
 	}
 
@@ -90,5 +92,40 @@ func (cc *ConfigurationController) Add(configs ...Configuration) (names []string
 
 	err = tx.Commit()
 	return names, err
+
+}
+
+// Delete will delete all of the configurations whose name is in the list
+// of names in the arugment. It will not return an error if the name is not found.
+func (cc *ConfigurationController) Delete(names ...string) (err error) {
+	var (
+		tx   *sql.Tx
+		stmt *sql.Stmt
+	)
+	tx, err = cc.DB.Begin()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	stmt, err = tx.Prepare("DELETE FROM configurations where config_name = $1")
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	for _, name := range names {
+		_, err := stmt.Exec(name)
+
+		if err == sql.ErrNoRows {
+			err = nil
+		}
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return tx.Commit()
 
 }

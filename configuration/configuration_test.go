@@ -169,6 +169,50 @@ var tests = map[string]struct {
 			{Name: "Config1", HostName: "Config.9", Port: 9, Username: "user9"},
 		},
 	},
+	"Delete": {
+		test: func(cc *ConfigurationController, data []Configuration) error {
+			expected := make([]Configuration, 0, len(data))
+			toDelete := make([]Configuration, 0, 4)
+			expected = append(append(expected, data[0:4]...), data[7])
+			toDelete = append(append(toDelete, data[4:7]...), data[8:]...)
+			namesToDelete := make([]string, 0, len(toDelete))
+			for _, config := range toDelete {
+				namesToDelete = append(namesToDelete, config.Name)
+			}
+
+			if _, err := cc.Add(data...); err != nil {
+				return err
+			}
+
+			if err := cc.Delete(namesToDelete...); err != nil {
+				return err
+			}
+
+			actual, err := cc.GetAll()
+			if err != nil {
+				return err
+			}
+
+			if !Equals(actual, expected) {
+				return failure{Expected: expected, Actual: actual}
+			}
+
+			return nil
+		},
+		expected: baseExpected,
+	},
+	"DeleteNonexisting": {
+		test: func(cc *ConfigurationController, data []Configuration) error {
+			if _, err := cc.Add(data...); err != nil {
+				return err
+			}
+			if err := cc.Delete("THIS DOES NOT EXIST"); err != nil {
+				return failure{"Unexpected Error", nil, err}
+			}
+			return nil
+		},
+		expected: baseExpected,
+	},
 }
 
 func TestConfiguration(t *testing.T) {
