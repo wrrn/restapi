@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS users CASCADE;
-DROP TABLE IF EXISTS configuration CASCADE;
+DROP TABLE IF EXISTS configurations CASCADE;
 DROP TABLE IF EXISTS sessions CASCADE;
 CREATE TABLE users(
        id SERIAL PRIMARY KEY,
@@ -8,13 +8,12 @@ CREATE TABLE users(
 );
 
 
-CREATE TABLE configuration(
+CREATE TABLE configurations(
        id SERIAL PRIMARY KEY,
-       user_id INT,
-       config_name VARCHAR,
+       config_name VARCHAR UNIQUE,
        host_name VARCHAR,
-       username VARCHAR,
-       FOREIGN KEY (user_id) REFERENCES users(id)
+       port INT, 
+       username VARCHAR
 );
 
 
