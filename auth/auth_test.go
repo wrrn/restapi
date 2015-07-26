@@ -97,6 +97,98 @@ var handlerTests = map[string]struct {
 			return nil
 		},
 	},
+
+	"TestValidSession": {
+		HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+			loginReq := generateLoginRequest(User{0, "john", "1234abc"})
+			loginRecorder := httptest.NewRecorder()
+			auth.HandleLogin(loginRecorder, loginReq)
+			cookie := loginRecorder.Header().Get("Set-Cookie")
+			r.Header.Set("Cookie", cookie)
+			if user, err := auth.CheckSession(r); err != nil || user.Username != "john" {
+				Unauthorized(w)
+			}
+			if _, err := w.Write([]byte("Success")); err != nil {
+				http.Error(w, "Server Error", http.StatusInternalServerError)
+			}
+		},
+		Request: NewRequest("GET", "/secret", nil),
+		pass: func(r *httptest.ResponseRecorder) error {
+			if r.Code != http.StatusOK {
+				return Failure{"", http.StatusOK, r.Code}
+			}
+			body := r.Body.String()
+			if body != "Success" {
+				return Failure{"Body did not match", "Success", body}
+			}
+
+			return nil
+		},
+	},
+
+	"TestInvalidSession": {
+		HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+			loginReq := generateLoginRequest(User{0, "john", "1234abc"})
+			loginRecorder := httptest.NewRecorder()
+			auth.HandleLogin(loginRecorder, loginReq)
+			cookie := &http.Cookie{
+				Name:  CookieName,
+				Value: "NOT A VALID COOKIE",
+			}
+			r.Header.Set("Cookie", cookie.String())
+			if user, err := auth.CheckSession(r); err != nil || user.Username != "john" {
+				Unauthorized(w)
+				return
+			}
+			if _, err := w.Write([]byte("Success")); err != nil {
+				http.Error(w, "Server Error", http.StatusInternalServerError)
+			}
+		},
+		Request: NewRequest("GET", "/secret", nil),
+		pass: func(r *httptest.ResponseRecorder) error {
+			if r.Code != http.StatusUnauthorized {
+				return Failure{"", http.StatusOK, r.Code}
+			}
+			body := strings.TrimSpace(r.Body.String())
+			if body != "Unauthorized" {
+				return Failure{"Body did not match", "Unauthorized", body}
+			}
+
+			return nil
+		},
+	},
+	"TestLogout": {
+		HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+			loginReq := generateLoginRequest(User{0, "john", "1234abc"})
+			loginRecorder := httptest.NewRecorder()
+			auth.HandleLogin(loginRecorder, loginReq)
+			cookie := loginRecorder.Header().Get("Set-Cookie")
+			r.Header.Set("Cookie", cookie)
+			auth.HandleLogout(w, r)
+		},
+		pass: func(r *httptest.ResponseRecorder) error {
+			if r.Code != http.StatusOK {
+				return Failure{"", http.StatusOK, r.Code}
+			}
+
+			body := r.Body.String()
+			if body != "Success" {
+				return Failure{"Body did not match", "Success", body}
+			}
+
+			count := -1
+			err := auth.DB.QueryRow("SELECT COUNT(session_id) from sessions").Scan(&count)
+			if err != nil {
+				return Failure{"Unable to access count of sessions", nil, nil}
+			}
+			if count != 0 {
+				return Failure{"Session not removed from the database", nil, nil}
+			}
+
+			return nil
+		},
+		Request: NewRequest("POST", "/logout", nil),
+	},
 }
 
 func TestHandler(t *testing.T) {
