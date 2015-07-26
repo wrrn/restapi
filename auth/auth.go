@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"math/big"
 	"net/http"
@@ -13,7 +14,12 @@ import (
 
 const (
 	CookieName       = "RESTAPI"
+	secret           = "Not a secret"
 	randMax    int64 = 54050505434503053
+)
+
+var (
+	InvalidSessionErr = errors.New("Invalid Session")
 )
 
 type User struct {
@@ -50,6 +56,18 @@ func (a Auth) HandleLogin(w http.ResponseWriter, r *http.Request) {
 
 	if _, err := w.Write([]byte("Authorized")); err != nil {
 		log.Println(err)
+		http.Error(w, "Server Error", http.StatusInternalServerError)
+	}
+
+}
+
+func (a Auth) HandleLogout(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie(CookieName)
+	if err == nil {
+		a.revokeSession(cookie.Value)
+	}
+
+	if _, err := w.Write([]byte("Success")); err != nil {
 		http.Error(w, "Server Error", http.StatusInternalServerError)
 	}
 
@@ -96,4 +114,12 @@ func (a Auth) createSession(user User) (sessionID string, err error) {
 		_, err = a.DB.Exec("INSERT INTO sessions(session_id, user_id) VALUES($1, $2)", sessionID, user.id)
 	}
 	return string(sessionID), err
+}
+
+func (a Auth) revokeSession(sessionID string) error {
+	_, err := a.DB.Exec("DELETE FROM sessions where session_id = $1", sessionID)
+	if err == sql.ErrNoRows {
+		err = nil
+	}
+	return err
 }
