@@ -55,6 +55,16 @@ func (a Auth) HandleLogin(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (a Auth) RegisterUser(user User) error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	_, err = a.DB.Exec("INSERT INTO users(username, password) VALUES($1, $2)", user.Username, hashedPassword)
+	return err
+}
+
 func Unauthorized(w http.ResponseWriter) {
 	http.Error(w, "Unauthorized", http.StatusUnauthorized)
 }
