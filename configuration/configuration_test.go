@@ -45,6 +45,18 @@ func (f failure) Error() string {
 
 }
 
+var baseExpected = []Configuration{
+	{Name: "Config1", HostName: "Config.1", Port: 1, Username: "user1"},
+	{Name: "Config2", HostName: "Config.2", Port: 2, Username: "user2"},
+	{Name: "Config3", HostName: "Config.3", Port: 3, Username: "user3"},
+	{Name: "Config4", HostName: "Config.4", Port: 4, Username: "user4"},
+	{Name: "Config5", HostName: "Config.5", Port: 5, Username: "user5"},
+	{Name: "Config6", HostName: "Config.6", Port: 6, Username: "user6"},
+	{Name: "Config7", HostName: "Config.7", Port: 7, Username: "user7"},
+	{Name: "Config8", HostName: "Config.8", Port: 8, Username: "user8"},
+	{Name: "Config9", HostName: "Config.9", Port: 9, Username: "user9"},
+}
+
 var tests = map[string]struct {
 	test     func(*ConfigurationController, []Configuration) error
 	expected []Configuration
@@ -87,17 +99,7 @@ var tests = map[string]struct {
 
 			return nil
 		},
-		expected: []Configuration{
-			{Name: "Config1", HostName: "Config.1", Port: 1, Username: "user1"},
-			{Name: "Config2", HostName: "Config.2", Port: 2, Username: "user2"},
-			{Name: "Config3", HostName: "Config.3", Port: 3, Username: "user3"},
-			{Name: "Config4", HostName: "Config.4", Port: 4, Username: "user4"},
-			{Name: "Config5", HostName: "Config.5", Port: 5, Username: "user5"},
-			{Name: "Config6", HostName: "Config.6", Port: 6, Username: "user6"},
-			{Name: "Config7", HostName: "Config.7", Port: 7, Username: "user7"},
-			{Name: "Config8", HostName: "Config.8", Port: 8, Username: "user8"},
-			{Name: "Config9", HostName: "Config.9", Port: 9, Username: "user9"},
-		},
+		expected: baseExpected,
 	},
 
 	"TestAddOne": {
@@ -114,9 +116,7 @@ var tests = map[string]struct {
 
 			return nil
 		},
-		expected: []Configuration{
-			{Name: "Config1", HostName: "Config.1", Port: 1, Username: "user1"},
-		},
+		expected: baseExpected[:1],
 	},
 
 	"TestAddMultiple": {
@@ -133,17 +133,7 @@ var tests = map[string]struct {
 
 			return nil
 		},
-		expected: []Configuration{
-			{Name: "Config1", HostName: "Config.1", Port: 1, Username: "user1"},
-			{Name: "Config2", HostName: "Config.2", Port: 2, Username: "user2"},
-			{Name: "Config3", HostName: "Config.3", Port: 3, Username: "user3"},
-			{Name: "Config4", HostName: "Config.4", Port: 4, Username: "user4"},
-			{Name: "Config5", HostName: "Config.5", Port: 5, Username: "user5"},
-			{Name: "Config6", HostName: "Config.6", Port: 6, Username: "user6"},
-			{Name: "Config7", HostName: "Config.7", Port: 7, Username: "user7"},
-			{Name: "Config8", HostName: "Config.8", Port: 8, Username: "user8"},
-			{Name: "Config9", HostName: "Config.9", Port: 9, Username: "user9"},
-		},
+		expected: baseExpected,
 	},
 	"TestAddCollision": {
 		test: func(cc *ConfigurationController, data []Configuration) error {
