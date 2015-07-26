@@ -23,6 +23,7 @@ var (
 )
 
 type User struct {
+	// id refers to the ID that is stored in the database
 	id       int
 	Username string `json:"username""`
 	Password string `json:"password"`
@@ -31,6 +32,12 @@ type Auth struct {
 	*sql.DB
 }
 
+// HandleLogin checks decodes the request and creates a session for valid
+// credentials. If the users credentials are correct and session could be
+// created than a 200 code with a message of "Authorized" will be returned.
+// If the credentials are bad 401 code with a message of "Unauthorized" will
+// be returned. A 501 error  with a message of "Server Error" will be returned
+// if a session cannot be created or the body of the response cannot be written.
 func (a Auth) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	var (
 		user User
@@ -61,6 +68,8 @@ func (a Auth) HandleLogin(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Handlelogout will write a 200 code with a message of success to the response.
+// If the response cannot be written to, a 500 code with the message "Server Error" will be sent
 func (a Auth) HandleLogout(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(CookieName)
 	if err == nil {
@@ -73,6 +82,8 @@ func (a Auth) HandleLogout(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// CheckSession checks the request to verify that the value of cookie with the
+// name "RESTAPI" matches a session id  stored in the database
 func (a Auth) CheckSession(r *http.Request) (user User, err error) {
 	cookie, err := r.Cookie(CookieName)
 	if err != nil {
@@ -83,6 +94,7 @@ func (a Auth) CheckSession(r *http.Request) (user User, err error) {
 	return user, err
 }
 
+// RegisterUser register a user and stores them in the database.
 func (a Auth) RegisterUser(user User) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -93,10 +105,14 @@ func (a Auth) RegisterUser(user User) error {
 	return err
 }
 
+// Unauthorized is just a convience function that allows us to write a
+// status code of 401 and a message of "Unauthorized" to the response
 func Unauthorized(w http.ResponseWriter) {
 	http.Error(w, "Unauthorized", http.StatusUnauthorized)
 }
 
+// generateCookie returns a cookie whose name is "RESTAPI" and whose value is
+// the value of the argument.
 func generateCookie(sessionID string) *http.Cookie {
 	return &http.Cookie{
 		Name:  CookieName,
@@ -105,6 +121,9 @@ func generateCookie(sessionID string) *http.Cookie {
 
 }
 
+// login verifies that the credentials are valid and returns a populated user
+// if they are valid with a nil error. If the error is non-nil credential
+// validation failed
 func (a Auth) login(username, password string) (user User, err error) {
 	user.Username = username
 	if err = a.DB.QueryRow("SELECT id, password FROM users where username = $1", username).Scan(&user.id, &user.Password); err != nil {
@@ -116,6 +135,8 @@ func (a Auth) login(username, password string) (user User, err error) {
 
 }
 
+// createSession creates a session id and adds to the database, and returns
+// the created session id.
 func (a Auth) createSession(user User) (sessionID string, err error) {
 
 	sessNum, err := rand.Int(rand.Reader, big.NewInt(randMax))
@@ -123,9 +144,10 @@ func (a Auth) createSession(user User) (sessionID string, err error) {
 		sessionID = sessNum.String()
 		_, err = a.DB.Exec("INSERT INTO sessions(session_id, user_id) VALUES($1, $2)", sessionID, user.id)
 	}
-	return string(sessionID), err
+	return sessionID, err
 }
 
+// revokeSession removes the argument from the database.
 func (a Auth) revokeSession(sessionID string) error {
 	_, err := a.DB.Exec("DELETE FROM sessions where session_id = $1", sessionID)
 	if err == sql.ErrNoRows {
