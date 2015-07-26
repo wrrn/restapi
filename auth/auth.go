@@ -24,8 +24,8 @@ var (
 
 type User struct {
 	// id refers to the ID that is stored in the database
-	id       int
-	Username string `json:"username""`
+	id       int    `json:-`
+	Username string `json:"username"`
 	Password string `json:"password"`
 }
 type Auth struct {
@@ -44,7 +44,11 @@ func (a Auth) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		err  error
 	)
 
-	json.NewDecoder(r.Body).Decode(&user)
+	err = json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, "Format Error", http.StatusBadRequest)
+		return
+	}
 	user, err = a.login(user.Username, user.Password)
 	if err != nil {
 		Unauthorized(w)
