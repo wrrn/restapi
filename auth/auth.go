@@ -73,6 +73,16 @@ func (a Auth) HandleLogout(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (a Auth) CheckSession(r *http.Request) (user User, err error) {
+	cookie, err := r.Cookie(CookieName)
+	if err != nil {
+		return user, err
+	}
+	err = a.DB.QueryRow("SELECT id, username FROM users INNER JOIN sessions ON users.id = sessions.user_id WHERE sessions.session_id = $1", cookie.Value).Scan(&user.id, &user.Username)
+
+	return user, err
+}
+
 func (a Auth) RegisterUser(user User) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
