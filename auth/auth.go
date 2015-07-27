@@ -115,6 +115,12 @@ func Unauthorized(w http.ResponseWriter) {
 	http.Error(w, "Unauthorized", http.StatusUnauthorized)
 }
 
+// Forbidden is just a convience function that allows us to write a
+// status code of 403 and a message of "Forbidden" to the response
+func Forbidden(w http.ResponseWriter) {
+	http.Error(w, "Forbidden", http.StatusForbidden)
+}
+
 // generateCookie returns a cookie whose name is "RESTAPI" and whose value is
 // the value of the argument.
 func generateCookie(sessionID string) *http.Cookie {
