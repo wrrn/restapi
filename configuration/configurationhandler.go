@@ -88,3 +88,15 @@ func (ch ConfigurationHandler) handleAdd(w http.ResponseWriter, r *http.Request)
 	response.WriteJson(w, http.StatusOK, Configurations{configs})
 
 }
+
+// handleDelete deletes the configuration whose name matches the name specified
+// in the url. If no such configuration exists do nothing.
+// Always sends a 204 code.
+func (ch ConfigurationHandler) handleDelete(w http.ResponseWriter, r *http.Request, configName string) {
+	if err := ch.Delete(configName); err != nil {
+		response.ServerError(w)
+		return
+	}
+	response.Write(w, http.StatusNoContent, nil)
+}
+
