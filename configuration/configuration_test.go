@@ -114,6 +114,15 @@ var tests = map[string]struct {
 				}
 			}
 
+			configs, err := cc.Get(names...)
+			if err != nil {
+				return err
+			}
+
+			if !Equals(configs, expected) {
+				return failure{Expected: expected, Actual: configs}
+			}
+
 			return nil
 		},
 		expected: baseExpected[:1],
@@ -129,6 +138,15 @@ var tests = map[string]struct {
 				if names[index] != expected[index].Name {
 					return failure{"Names do not match", expected[index].Name, names[index]}
 				}
+			}
+
+			configs, err := cc.Get(names...)
+			if err != nil {
+				return err
+			}
+
+			if !Equals(configs, expected) {
+				return failure{Expected: expected, Actual: configs}
 			}
 
 			return nil
@@ -223,25 +241,24 @@ var tests = map[string]struct {
 			}
 
 			expectedConfig := data[0]
-
+			expectedConfig.Name = "Hello"
 			newConfig := Configuration{Name: "Hello"}
 
 			if newConfig, err = cc.Modify(data[0].Name, newConfig); err != nil {
 				return err
 			}
 
-			expectedConfig.Name = "Hello"
 			if !EqualConfigurations(expectedConfig, newConfig) {
 				return failure{Expected: expectedConfig, Actual: newConfig}
 			}
 
-			err = cc.DB.QueryRow("SELECT id, config_name, host_name, username, port FROM configurations WHERE config_name = $1", expectedConfig.Name).Scan(&newConfig.ID, &newConfig.Name, &newConfig.HostName, &newConfig.Username, &newConfig.Port)
+			newConfigs, err := cc.Get(expectedConfig.Name)
 			if err != nil {
 				return err
 			}
 
-			if !EqualConfigurations(expectedConfig, newConfig) {
-				return failure{Expected: expectedConfig, Actual: newConfig}
+			if len(newConfigs) != 1 || !EqualConfigurations(expectedConfig, newConfigs[0]) {
+				return failure{Expected: expectedConfig, Actual: newConfigs}
 			}
 
 			return nil
@@ -272,13 +289,13 @@ var tests = map[string]struct {
 				return failure{Expected: data[0], Actual: newConfig}
 			}
 
-			err = cc.DB.QueryRow("SELECT id, config_name, host_name, username, port FROM configurations WHERE config_name = $1", expectedConfig.Name).Scan(&newConfig.ID, &newConfig.Name, &newConfig.HostName, &newConfig.Username, &newConfig.Port)
+			newConfigs, err := cc.Get(expectedConfig.Name)
 			if err != nil {
 				return err
 			}
 
-			if !EqualConfigurations(expectedConfig, newConfig) {
-				return failure{Expected: expectedConfig, Actual: newConfig}
+			if len(newConfigs) != 1 || !EqualConfigurations(expectedConfig, newConfigs[0]) {
+				return failure{Expected: expectedConfig, Actual: newConfigs}
 			}
 
 			return nil
@@ -301,16 +318,11 @@ var tests = map[string]struct {
 			}
 			newConfig := expectedConfig
 			if newConfig, err = cc.Modify("NOT A REAL NAME", newConfig); err != DoesNotExistErr {
-				return err
+				return failure{Prefix: "Modify modified non-existing config", Expected: DoesNotExistErr, Actual: err}
 			}
 
-			err = cc.DB.QueryRow("SELECT id, config_name, host_name, username, port FROM configurations WHERE config_name = $1", data[0].Name).Scan(&newConfig.ID, &newConfig.Name, &newConfig.HostName, &newConfig.Username, &newConfig.Port)
-			if err != nil {
-				return err
-			}
-
-			if !EqualConfigurations(data[0], newConfig) {
-				return failure{Expected: data[0], Actual: newConfig}
+			if newConfigs, err := cc.Get(expectedConfig.Name); err != DoesNotExistErr || len(newConfigs) != 0 {
+				return failure{Prefix: "Config should not have been found:", Expected: DoesNotExistErr, Actual: err}
 			}
 
 			return nil

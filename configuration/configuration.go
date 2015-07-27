@@ -1,7 +1,9 @@
 package configuration
 
 import (
+	"bytes"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/lib/pq"
@@ -11,8 +13,8 @@ const (
 	uniqueViolation = "23505"
 )
 
-var DuplicateConfigErr = fmt.Errorf("Configuration exists with the same name")
-var DoesNotExistErr = fmt.Errorf("Configuration does not exist")
+var DuplicateConfigErr = errors.New("Configuration exists with the same name")
+var DoesNotExistErr = errors.New("Configuration does not exist")
 
 type ConfigurationController struct {
 	*sql.DB
@@ -43,7 +45,7 @@ func (cc *ConfigurationController) GetAll() (configs []Configuration, err error)
 	} else if err != nil {
 		return configs, err
 	}
-
+	defer rows.Close()
 	for rows.Next() {
 		config := Configuration{}
 		err = rows.Scan(&config.ID, &config.Name, &config.HostName, &config.Username, &config.Port)
@@ -52,6 +54,42 @@ func (cc *ConfigurationController) GetAll() (configs []Configuration, err error)
 		}
 	}
 	return configs, rows.Err()
+}
+
+// Get returns a configuration that matches the name in the argument. If no such
+// configuration exists a DoesNotExistError is returned.
+func (cc *ConfigurationController) Get(names ...string) (configs []Configuration, err error) {
+	query, args := buildGetQuery(names...)
+
+	configs = make([]Configuration, 0, len(names))
+	rows, err := cc.DB.Query(query, args...)
+
+	if err == sql.ErrNoRows {
+		err = DoesNotExistErr
+	}
+	if err != nil {
+		return configs, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		config := Configuration{}
+		err := rows.Scan(&config.ID, &config.Name, &config.HostName, &config.Username, &config.Port)
+		if err != nil {
+			return configs, err
+		}
+
+		configs = append(configs, config)
+
+	}
+
+	if len(configs) != len(names) {
+		err = DoesNotExistErr
+	}
+
+	return configs, err
+
 }
 
 // Add attempts to add all of the configurations in the argument to the database. It returns
@@ -140,6 +178,7 @@ func (cc *ConfigurationController) Modify(name string, config Configuration) (ne
 		tx           *sql.Tx
 		actualConfig Configuration
 	)
+
 	tx, err = cc.DB.Begin()
 	if err != nil {
 		tx.Rollback()
@@ -147,6 +186,7 @@ func (cc *ConfigurationController) Modify(name string, config Configuration) (ne
 	}
 
 	err = tx.QueryRow("SELECT id, config_name, host_name, username, port FROM configurations WHERE config_name = $1", name).Scan(&actualConfig.ID, &actualConfig.Name, &actualConfig.HostName, &actualConfig.Username, &actualConfig.Port)
+
 	if err == sql.ErrNoRows {
 		err = DoesNotExistErr
 	}
@@ -197,6 +237,24 @@ func (cc *ConfigurationController) Modify(name string, config Configuration) (ne
 	tx.Commit()
 	return config, nil
 
+}
+
+func buildGetQuery(names ...string) (query string, args []interface{}) {
+	if len(names) < 1 {
+		return query, args
+	}
+	args = make([]interface{}, 0, len(names))
+	buff := bytes.NewBufferString("SELECT id, config_name, host_name, username, port FROM configurations WHERE config_name = $1")
+	args = append(args, names[0])
+
+	for index, name := range names[1:] {
+		_, err := buff.WriteString(fmt.Sprintf(" OR config_name = $%d", index+2))
+		if err != nil {
+			return query, args
+		}
+		args = append(args, name)
+	}
+	return buff.String(), args
 }
 
 func EqualConfigurations(x, y Configuration) bool {
