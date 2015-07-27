@@ -98,6 +98,16 @@ func (a Auth) CheckSession(r *http.Request) (user User, err error) {
 	return user, err
 }
 
+// VerifySessions will return a handler that will verify that a session
+// exists before allowing the handler in the arugment to be called.
+// If a session does not exist sends a 403 code.
+func (a Auth) VerifySessions(h http.Handler) http.Handler {
+	return sessionsHandler{
+		Handler: h,
+		Auth:    a,
+	}
+}
+
 // RegisterUser register a user and stores them in the database.
 func (a Auth) RegisterUser(user User) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -113,6 +123,12 @@ func (a Auth) RegisterUser(user User) error {
 // status code of 401 and a message of "Unauthorized" to the response
 func Unauthorized(w http.ResponseWriter) {
 	http.Error(w, "Unauthorized", http.StatusUnauthorized)
+}
+
+// Forbidden is just a convience function that allows us to write a
+// status code of 403 and a message of "Forbidden" to the response
+func Forbidden(w http.ResponseWriter) {
+	http.Error(w, "Forbidden", http.StatusForbidden)
 }
 
 // generateCookie returns a cookie whose name is "RESTAPI" and whose value is
