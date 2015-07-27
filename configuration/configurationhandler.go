@@ -63,6 +63,10 @@ func (ch ConfigurationHandler) handleGet(w http.ResponseWriter, r *http.Request,
 	response.WriteJson(w, http.StatusOK, Configurations{configs})
 }
 
+// handleAdd parses the json in the request body and creates a configuration with the fields
+// indicated in the json. If successful it sends a 200 code. If two configurations
+//have the same name then it sends a 409 code with the configuration in the body of
+// the response.
 func (ch ConfigurationHandler) handleAdd(w http.ResponseWriter, r *http.Request) {
 	config := Configuration{}
 	err := json.NewDecoder(r.Body).Decode(&config)
