@@ -100,3 +100,30 @@ func (ch ConfigurationHandler) handleDelete(w http.ResponseWriter, r *http.Reque
 	response.Write(w, http.StatusNoContent, nil)
 }
 
+// handleModify modifies the configuration whose name matches the name specified
+// in the url. If no such configuration exists sends a 404 code. If the modification
+// would cause two configurations to have the same name then sends a 409 code with
+// the configuration in the body of the response. If successful sends a 200 code/
+func (ch ConfigurationHandler) handleModify(w http.ResponseWriter, r *http.Request, configName string) {
+	config := Configuration{}
+	err := json.NewDecoder(r.Body).Decode(&config)
+	if err != nil {
+		http.Error(w, "Bad Format", http.StatusBadRequest)
+		return
+	}
+
+	config, err = ch.Modify(configName, config)
+
+	if err == DoesNotExistErr {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	} else if confErr, ok := err.(ConfigurationError); ok && confErr.Err == DuplicateConfigErr {
+		response.WriteJson(w, http.StatusConflict, Configurations{[]Configuration{confErr.Configuration}})
+		return
+	} else if err != nil {
+		response.ServerError(w)
+		return
+	}
+
+	response.WriteJson(w, http.StatusOK, Configurations{[]Configuration{config}})
+}
