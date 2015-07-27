@@ -119,6 +119,8 @@ func (cc *ConfigurationController) Add(configs ...Configuration) (configsAdded [
 
 		if err != nil {
 			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == uniqueViolation {
+				conflicts, _ := cc.Get(config.Name)
+				config := Configurations{conflicts}.GetFirst()
 				err = ConfigurationError{
 					Err:           DuplicateConfigErr,
 					Configuration: config,
@@ -224,6 +226,8 @@ func (cc *ConfigurationController) Modify(name string, config Configuration) (ne
 
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == uniqueViolation {
+			conflicts, _ := cc.Get(config.Name)
+			config := Configurations{conflicts}.GetFirst()
 			err = ConfigurationError{
 				Err:           DuplicateConfigErr,
 				Configuration: config,
