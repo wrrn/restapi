@@ -31,7 +31,7 @@ func Write(w http.ResponseWriter, code int, data []byte) {
 // On failure it will  write a status code of 500 and a message of "Server Error"
 // to the response.
 func WriteJson(w http.ResponseWriter, code int, data interface{}) {
-	rawJson, err := json.Marshal(data)
+	rawJson, err := json.MarshalIndent(data, "", " ")
 	if err != nil {
 		http.Error(w, "Server Error", http.StatusInternalServerError)
 	}

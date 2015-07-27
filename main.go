@@ -8,6 +8,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/warrenharper/restapi/auth"
 	"github.com/warrenharper/restapi/configuration"
+	"github.com/warrenharper/restapi/configuration/confighandler"
 	"github.com/warrenharper/restapi/utils/request"
 	"github.com/warrenharper/restapi/utils/response"
 )
@@ -27,7 +28,7 @@ func main() {
 	var (
 		db                          = SetupDB()
 		authentication *auth.Auth   = &auth.Auth{db}
-		configHandler  http.Handler = configuration.ConfigurationHandler{
+		configHandler  http.Handler = confighandler.Handler{
 			configuration.ConfigurationController{db},
 		}
 	)
