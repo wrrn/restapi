@@ -1,6 +1,8 @@
 package configuration
 
-type Configs []Configuration
+type Configurations struct {
+	Configs []Configuration `json:"configurations"`
+}
 
 func Equals(x, y []Configuration) bool {
 	if len(x) != len(y) {
