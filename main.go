@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
-	"strings"
 
 	_ "github.com/lib/pq"
 	"github.com/warrenharper/restapi/auth"
+	"github.com/warrenharper/restapi/configuration"
+	"github.com/warrenharper/restapi/utils/request"
+	"github.com/warrenharper/restapi/utils/response"
 )
 
 func SetupDB() *sql.DB {
@@ -21,29 +23,40 @@ func SetupDB() *sql.DB {
 	return db
 }
 
-var (
-	authentication *auth.Auth = &auth.Auth{SetupDB()}
-)
-
 func main() {
+	var (
+		db                        = SetupDB()
+		authentication *auth.Auth = &auth.Auth{db}
+		configHandler             = configuration.ConfigurationHandler{
+			configuration.ConfigurationController{db},
+		}
+		_ = configHandler
+	)
 	authentication.RegisterUser(auth.User{Username: "john_doe", Password: "password"})
 
+	mux := http.NewServeMux()
+
 	// Login
-	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		if strings.ToUpper(r.Method) != "POST" {
-			http.Error(w, "", http.StatusMethodNotAllowed)
+	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		if !request.Is(r, "POST") {
+			response.MethodNotAllowed(w)
+			return
 		}
 		authentication.HandleLogin(w, r)
 		return
 	})
 
 	//Logout
-	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
-		if strings.ToUpper(r.Method) != "POST" {
-			http.Error(w, "", http.StatusMethodNotAllowed)
+	mux.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+		if !request.Is(r, "POST") {
+			response.MethodNotAllowed(w)
+			return
 		}
 		authentication.HandleLogout(w, r)
 	})
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	mux.Handle("/configurations/", http.StripPrefix("/configurations", configHandler))
+
+	log.Fatal(http.ListenAndServe(":8080", mux))
+
 }
