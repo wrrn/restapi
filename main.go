@@ -25,14 +25,14 @@ func SetupDB() *sql.DB {
 
 func main() {
 	var (
-		db                        = SetupDB()
-		authentication *auth.Auth = &auth.Auth{db}
-		configHandler             = configuration.ConfigurationHandler{
+		db                          = SetupDB()
+		authentication *auth.Auth   = &auth.Auth{db}
+		configHandler  http.Handler = configuration.ConfigurationHandler{
 			configuration.ConfigurationController{db},
 		}
-		_ = configHandler
 	)
 	authentication.RegisterUser(auth.User{Username: "john_doe", Password: "password"})
+	configHandler = authentication.VerifySessions(configHandler)
 
 	mux := http.NewServeMux()
 
