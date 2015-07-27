@@ -2,7 +2,6 @@ package configuration
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -15,11 +14,6 @@ type ConfigurationHandler struct {
 }
 
 func (ch ConfigurationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// if _, err := authentication.CheckSession(r); err != nil {
-	// 	auth.Forbidden(w)
-	// 	return
-	// }
-
 	path := r.URL.Path
 	variables := request.GetURLVariables(path)
 	log.Println(variables)
@@ -28,18 +22,21 @@ func (ch ConfigurationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	case request.Is(r, "GET") && path == "/":
 		ch.handleGetAll(w, r)
 	case request.Is(r, "GET") && len(variables) == 1:
-		ch.handleGet(w, r, variables)
+		ch.handleGet(w, r, variables[0])
 	case request.Is(r, "POST") && path == "/":
 		ch.handleAdd(w, r)
 	case request.Is(r, "DELETE") && len(variables) == 1:
+		ch.handleDelete(w, r, variables[0])
 	case request.Is(r, "PATCH") && len(variables) == 1:
+		ch.handleModify(w, r, variables[0])
 	default:
-		fmt.Fprintf(w, "PATH: %s", path)
+		http.Error(w, "", http.StatusNotImplemented)
 
 	}
 
 }
 
+// handleGetAll sends a list of all the configurations with a 200 code
 func (ch ConfigurationHandler) handleGetAll(w http.ResponseWriter, r *http.Request) {
 	configs, err := ch.GetAll()
 	if err != nil {
@@ -49,8 +46,10 @@ func (ch ConfigurationHandler) handleGetAll(w http.ResponseWriter, r *http.Reque
 	response.WriteJson(w, http.StatusOK, Configurations{configs})
 }
 
-func (ch ConfigurationHandler) handleGet(w http.ResponseWriter, r *http.Request, vars []string) {
-	configName := vars[0]
+// handleGet sends a list of configurations containing only one configuration
+// whose name matches the name specified in the url with a 200 code. If no such
+// configuration can be found sends a 404 code.
+func (ch ConfigurationHandler) handleGet(w http.ResponseWriter, r *http.Request, configName string) {
 	configs, err := ch.Get(configName)
 	if err == DoesNotExistErr {
 		http.Error(w, "", http.StatusNotFound)
