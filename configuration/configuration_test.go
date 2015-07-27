@@ -76,7 +76,7 @@ var tests = map[string]struct {
 		test: func(cc *ConfigurationController, expected []Configuration) error {
 			for _, config := range expected {
 				_, err := cc.DB.Exec(`
-                             INSERT INTO configurations(config_name, host_name, port, username) VALUES ($1, $2, $3, $4)`,
+	                         INSERT INTO configurations(config_name, host_name, port, username) VALUES ($1, $2, $3, $4)`,
 					config.Name, config.HostName, config.Port, config.Username)
 				if err != nil {
 					return err
@@ -212,6 +212,110 @@ var tests = map[string]struct {
 			return nil
 		},
 		expected: baseExpected,
+	},
+
+	"TestModify": {
+		test: func(cc *ConfigurationController, data []Configuration) error {
+
+			_, err := cc.Add(data...)
+			if err != nil {
+				return err
+			}
+
+			expectedConfig := data[0]
+
+			newConfig := Configuration{Name: "Hello"}
+
+			if newConfig, err = cc.Modify(data[0].Name, newConfig); err != nil {
+				return err
+			}
+
+			expectedConfig.Name = "Hello"
+			if !EqualConfigurations(expectedConfig, newConfig) {
+				return failure{Expected: expectedConfig, Actual: newConfig}
+			}
+
+			err = cc.DB.QueryRow("SELECT id, config_name, host_name, username, port FROM configurations WHERE config_name = $1", expectedConfig.Name).Scan(&newConfig.ID, &newConfig.Name, &newConfig.HostName, &newConfig.Username, &newConfig.Port)
+			if err != nil {
+				return err
+			}
+
+			if !EqualConfigurations(expectedConfig, newConfig) {
+				return failure{Expected: expectedConfig, Actual: newConfig}
+			}
+
+			return nil
+		},
+		expected: baseExpected[:1],
+	},
+
+	"TestModifyAllFields": {
+		test: func(cc *ConfigurationController, data []Configuration) error {
+			_, err := cc.Add(data...)
+			expectedConfig := Configuration{
+				Name:     "Something else",
+				HostName: "Other.stuff",
+				Username: "NewUserName",
+				Port:     9090,
+			}
+			_ = expectedConfig
+
+			if err != nil {
+				return err
+			}
+			newConfig := expectedConfig
+			if newConfig, err = cc.Modify(data[0].Name, newConfig); err != nil {
+				return err
+			}
+
+			if !EqualConfigurations(expectedConfig, newConfig) {
+				return failure{Expected: data[0], Actual: newConfig}
+			}
+
+			err = cc.DB.QueryRow("SELECT id, config_name, host_name, username, port FROM configurations WHERE config_name = $1", expectedConfig.Name).Scan(&newConfig.ID, &newConfig.Name, &newConfig.HostName, &newConfig.Username, &newConfig.Port)
+			if err != nil {
+				return err
+			}
+
+			if !EqualConfigurations(expectedConfig, newConfig) {
+				return failure{Expected: expectedConfig, Actual: newConfig}
+			}
+
+			return nil
+		},
+		expected: baseExpected[:1],
+	},
+	"TestModifyNonExisting": {
+		test: func(cc *ConfigurationController, data []Configuration) error {
+			_, err := cc.Add(data...)
+			expectedConfig := Configuration{
+				Name:     "Something else",
+				HostName: "Other.stuff",
+				Username: "NewUserName",
+				Port:     9090,
+			}
+			_ = expectedConfig
+
+			if err != nil {
+				return err
+			}
+			newConfig := expectedConfig
+			if newConfig, err = cc.Modify("NOT A REAL NAME", newConfig); err != DoesNotExistErr {
+				return err
+			}
+
+			err = cc.DB.QueryRow("SELECT id, config_name, host_name, username, port FROM configurations WHERE config_name = $1", data[0].Name).Scan(&newConfig.ID, &newConfig.Name, &newConfig.HostName, &newConfig.Username, &newConfig.Port)
+			if err != nil {
+				return err
+			}
+
+			if !EqualConfigurations(data[0], newConfig) {
+				return failure{Expected: data[0], Actual: newConfig}
+			}
+
+			return nil
+		},
+		expected: baseExpected[:1],
 	},
 }
 

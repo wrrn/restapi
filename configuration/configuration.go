@@ -12,6 +12,7 @@ const (
 )
 
 var DuplicateConfigErr = fmt.Errorf("Configuration exists with the same name")
+var DoesNotExistErr = fmt.Errorf("Configuration does not exist")
 
 type ConfigurationController struct {
 	*sql.DB
@@ -27,11 +28,11 @@ func (ce ConfigurationError) Error() string {
 }
 
 type Configuration struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
-	HostName string `json:"hostname"`
-	Port     int    `json:"port"`
-	Username string `json:"username"`
+	ID       int    `json:"id,omitempty""`
+	Name     string `json:"name,omitempty"`
+	HostName string `json:"hostname,omitempty"`
+	Port     int    `json:"port,omitempty"`
+	Username string `json:"username,omitempty"`
 }
 
 // GetAll returns a list of all of the stored configurations
@@ -128,4 +129,79 @@ func (cc *ConfigurationController) Delete(names ...string) (err error) {
 
 	return tx.Commit()
 
+}
+
+// Modify modifies the field of configuration with the same name as the name
+// argument to match the fields of the second argument. All fields that are
+// not set will retain their values. A configuration with the updated fields
+// will be returned.
+func (cc *ConfigurationController) Modify(name string, config Configuration) (newConfig Configuration, err error) {
+	var (
+		tx           *sql.Tx
+		actualConfig Configuration
+	)
+	tx, err = cc.DB.Begin()
+	if err != nil {
+		tx.Rollback()
+		return newConfig, err
+	}
+
+	err = tx.QueryRow("SELECT id, config_name, host_name, username, port FROM configurations WHERE config_name = $1", name).Scan(&actualConfig.ID, &actualConfig.Name, &actualConfig.HostName, &actualConfig.Username, &actualConfig.Port)
+	if err == sql.ErrNoRows {
+		err = DoesNotExistErr
+	}
+	if err != nil {
+		tx.Rollback()
+		return newConfig, err
+	}
+
+	if config.Name == "" {
+		config.Name = actualConfig.Name
+	}
+
+	if config.HostName == "" {
+		config.HostName = actualConfig.HostName
+	}
+
+	if config.Username == "" {
+		config.Username = actualConfig.Username
+	}
+
+	if config.Port == 0 {
+		config.Port = actualConfig.Port
+	}
+
+	_, err = tx.Exec(
+		`UPDATE configurations 
+         SET 
+           config_name = $1,
+           host_name = $2,
+           username = $3,
+           port = $4
+        WHERE
+          config_name = $5`, config.Name, config.HostName, config.Username, config.Port, name)
+
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == uniqueViolation {
+			err = ConfigurationError{
+				Err:           DuplicateConfigErr,
+				Configuration: config,
+			}
+		} else if err == sql.ErrNoRows {
+			err = DoesNotExistErr
+		}
+		tx.Rollback()
+		return newConfig, err
+	}
+
+	tx.Commit()
+	return config, nil
+
+}
+
+func EqualConfigurations(x, y Configuration) bool {
+	return x.Name == y.Name &&
+		x.HostName == y.HostName &&
+		x.Username == y.Username &&
+		x.Port == y.Port
 }

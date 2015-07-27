@@ -2,7 +2,7 @@ package configuration
 
 type Configs []Configuration
 
-func Equals(x []Configuration, y []Configuration) bool {
+func Equals(x, y []Configuration) bool {
 	if len(x) != len(y) {
 		return false
 	}
@@ -13,10 +13,7 @@ func Equals(x []Configuration, y []Configuration) bool {
 
 			// This is so that we don't have to worry about database assigned ids
 
-			if configX.Name == configY.Name &&
-				configX.HostName == configY.HostName &&
-				configX.Username == configY.Username &&
-				configX.Port == configY.Port {
+			if EqualConfigurations(configX, configY) {
 				found = true
 				break
 			}
