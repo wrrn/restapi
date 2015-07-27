@@ -20,12 +20,12 @@ type ConfigurationController struct {
 	*sql.DB
 }
 
-type ConfigurationError struct {
+type Error struct {
 	Err error
 	Configuration
 }
 
-func (ce ConfigurationError) Error() string {
+func (ce Error) Error() string {
 	return fmt.Sprintf("Configuration Error:\n Error: %s\n Configuration: %#v", ce.Err.Error(), ce.Configuration)
 }
 
@@ -39,7 +39,7 @@ type Configuration struct {
 
 // GetAll returns a list of all of the stored configurations
 func (cc *ConfigurationController) GetAll() (configs []Configuration, err error) {
-	rows, err := cc.DB.Query("SELECT id, config_name, host_name, username, port FROM configurations")
+	rows, err := cc.DB.Query("SELECT id, config_name, host_name, username, port FROM configurations ORDER BY id ASC")
 	configs = make([]Configuration, 0)
 	if err == sql.ErrNoRows {
 		return configs, nil
@@ -95,7 +95,7 @@ func (cc *ConfigurationController) Get(names ...string) (configs []Configuration
 
 // Add attempts to add all of the configurations in the argument to the database. It returns
 // a list of the names of the configurations that have been added. It return a
-// ConfigurationError with an Err of DuplicateConfigError on the addition of a configuration
+// Error with an Err of DuplicateConfigError on the addition of a configuration
 // that has the same name of an existing configuration.
 func (cc *ConfigurationController) Add(configs ...Configuration) (configsAdded []Configuration, err error) {
 	var (
@@ -121,7 +121,7 @@ func (cc *ConfigurationController) Add(configs ...Configuration) (configsAdded [
 			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == uniqueViolation {
 				conflicts, _ := cc.Get(config.Name)
 				config := Configurations{conflicts}.GetFirst()
-				err = ConfigurationError{
+				err = Error{
 					Err:           DuplicateConfigErr,
 					Configuration: config,
 				}
@@ -228,7 +228,7 @@ func (cc *ConfigurationController) Modify(name string, config Configuration) (ne
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == uniqueViolation {
 			conflicts, _ := cc.Get(config.Name)
 			config := Configurations{conflicts}.GetFirst()
-			err = ConfigurationError{
+			err = Error{
 				Err:           DuplicateConfigErr,
 				Configuration: config,
 			}

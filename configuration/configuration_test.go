@@ -160,9 +160,9 @@ var tests = map[string]struct {
 	"TestAddCollision": {
 		test: func(cc *ConfigurationController, data []Configuration) error {
 			_, err := cc.Add(data...)
-			if err, ok := err.(ConfigurationError); !ok || err.Err != DuplicateConfigErr {
+			if err, ok := err.(Error); !ok || err.Err != DuplicateConfigErr {
 				return failure{"Errors do not match",
-					ConfigurationError{
+					Error{
 						DuplicateConfigErr,
 						data[8],
 					},
