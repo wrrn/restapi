@@ -40,6 +40,7 @@ type Configuration struct {
 // GetAll returns a list of all of the stored configurations
 func (cc *ConfigurationController) GetAll() (configs []Configuration, err error) {
 	rows, err := cc.DB.Query("SELECT id, config_name, host_name, username, port FROM configurations")
+	configs = make([]Configuration, 0)
 	if err == sql.ErrNoRows {
 		return configs, nil
 	} else if err != nil {
@@ -96,7 +97,7 @@ func (cc *ConfigurationController) Get(names ...string) (configs []Configuration
 // a list of the names of the configurations that have been added. It return a
 // ConfigurationError with an Err of DuplicateConfigError on the addition of a configuration
 // that has the same name of an existing configuration.
-func (cc *ConfigurationController) Add(configs ...Configuration) (names []string, err error) {
+func (cc *ConfigurationController) Add(configs ...Configuration) (configsAdded []Configuration, err error) {
 	var (
 		tx   *sql.Tx
 		stmt *sql.Stmt
@@ -104,13 +105,13 @@ func (cc *ConfigurationController) Add(configs ...Configuration) (names []string
 	tx, err = cc.DB.Begin()
 	if err != nil {
 		tx.Rollback()
-		return names, err
+		return configsAdded, err
 	}
 
 	stmt, err = tx.Prepare("INSERT INTO configurations(config_name, host_name, username, port) VALUES($1,$2,$3,$4)")
 	if err != nil {
 		tx.Rollback()
-		return names, err
+		return configsAdded, err
 	}
 
 	for _, config := range configs {
@@ -124,13 +125,13 @@ func (cc *ConfigurationController) Add(configs ...Configuration) (names []string
 				}
 			}
 			tx.Rollback()
-			return names, err
+			return configsAdded, err
 		}
-		names = append(names, config.Name)
+		configsAdded = append(configsAdded, config)
 	}
 
 	err = tx.Commit()
-	return names, err
+	return configsAdded, err
 
 }
 

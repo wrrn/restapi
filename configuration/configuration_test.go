@@ -104,17 +104,19 @@ var tests = map[string]struct {
 
 	"TestAddOne": {
 		test: func(cc *ConfigurationController, expected []Configuration) error {
-			names, err := cc.Add(expected...)
+			configs, err := cc.Add(expected...)
+			names := make([]string, 0, len(expected))
 			if err != nil {
 				return err
 			}
-			for index := range names {
-				if names[index] != expected[index].Name {
+			for index := range configs {
+				if configs[index].Name != expected[index].Name {
 					return failure{"Names do not match", expected[index].Name, names[index]}
 				}
+				names = append(names, expected[index].Name)
 			}
 
-			configs, err := cc.Get(names...)
+			configs, err = cc.Get(names...)
 			if err != nil {
 				return err
 			}
@@ -130,17 +132,19 @@ var tests = map[string]struct {
 
 	"TestAddMultiple": {
 		test: func(cc *ConfigurationController, expected []Configuration) error {
-			names, err := cc.Add(expected...)
+			configs, err := cc.Add(expected...)
+			names := make([]string, 0, len(expected))
 			if err != nil {
 				return err
 			}
-			for index := range names {
-				if names[index] != expected[index].Name {
+			for index := range configs {
+				if configs[index].Name != expected[index].Name {
 					return failure{"Names do not match", expected[index].Name, names[index]}
 				}
+				names = append(names, expected[index].Name)
 			}
 
-			configs, err := cc.Get(names...)
+			configs, err = cc.Get(names...)
 			if err != nil {
 				return err
 			}
