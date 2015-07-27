@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"log"
 	"math/big"
 	"net/http"
 
@@ -57,7 +56,6 @@ func (a Auth) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	sessionID, err := a.createSession(user)
 
 	if err != nil {
-		log.Println(err)
 		http.Error(w, "Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -66,7 +64,6 @@ func (a Auth) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookie)
 
 	if _, err := w.Write([]byte("Authorized")); err != nil {
-		log.Println(err)
 		http.Error(w, "Server Error", http.StatusInternalServerError)
 	}
 
