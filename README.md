@@ -32,6 +32,7 @@ POST /login
 ```
 
 __Input__
+
 | parameter| Description |
 |-----------|------------|
 |"username"| __Required__: The username as a string |
@@ -46,6 +47,7 @@ __Example__
 ```
 
 __Response__
+
 | Status | Body |
 | ---- | ---- |
 | 200 | "Authorized"|
@@ -60,6 +62,7 @@ __Input__
 This requires no input
 
 __Response__
+
 | Status | Body |
 | ---- | ---- |
 | 200 | "Success"|
@@ -80,6 +83,7 @@ __Input__
 This requires no input.
 
 __Response__
+
 | Status |
 |:------:|
 | 200    |
@@ -116,6 +120,7 @@ __Input__
 This requires no input.
 
 __Response__
+
 | Status |      Body     |            Description           |
 |:------:| :-----------: | :------------------------------: |
 | 200    | _See example_ | Found the configuration          |
@@ -148,6 +153,7 @@ POST /configurations/
 ```
 
 __Input__
+
 | parameter| Description | Type |
 |-----------|------------| ---- |
 |"name"| __Required__: The name of the configuation | string |
@@ -166,6 +172,7 @@ __Example__
 ```
 
 __Response__
+
 | Status |      Body     |            Description           |
 |:------:| :-----------: | :------------------------------: |
 | 200    | _See example_ | Configuration was added          |
@@ -198,6 +205,7 @@ __Input__
 This requires no input.
 
 __Response__
+
 | Status |      Body     |            Description           |
 |:------:| :-----------: | :------------------------------: |
 | 209    |   | Found the configuration          |
@@ -217,6 +225,7 @@ PATCH /configurations/:name
 ```
 
 __Input__
+
 | parameter| Description | Type |
 |-----------|------------| ---- |
 |"name"| The name of the configuation | string |
@@ -229,6 +238,7 @@ __Note:__ Any of the input fields that are ommited will remain the same
 
 
 __Response__
+
 | Status |      Body     |            Description           |
 |:------:| :-----------: | :------------------------------: |
 | 200    | _See example_ | Configuration was added          |
