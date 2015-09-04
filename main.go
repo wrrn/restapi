@@ -14,7 +14,7 @@ import (
 )
 
 func SetupDB() *sql.DB {
-	db, err := sql.Open("postgres", "user=tenable password=insecure dbname=restapi")
+	db, err := sql.Open("postgres", "user=insecure password=insecure dbname=restapi")
 	if err != nil {
 		log.Fatal(err)
 	}
