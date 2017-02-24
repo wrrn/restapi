@@ -68,7 +68,7 @@ __Response__
 | 200 | "Success"|
 
 
-#### __Note:__ If you are not authenticated you will receive a status code of 403 when you try to access any thing
+#### __Note:__ If you are not authenticated you will receive a status code of 403 when you try to access anything
 
 
 ## Configuration
