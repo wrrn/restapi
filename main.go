@@ -32,7 +32,7 @@ func main() {
 			configuration.ConfigurationController{db},
 		}
 	)
-	authentication.RegisterUser(auth.User{Username: "john_doe", Password: "password"})
+
 	configHandler = authentication.VerifySessions(configHandler)
 
 	mux := http.NewServeMux()
