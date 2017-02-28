@@ -12,7 +12,7 @@ var (
 
 // VerifyTokens will return a handler that will verify that a session
 // exists before allowing the handler in the arugment to be called.
-// If the token is not valid it responds with a 401 code.
+// If the TokenValidator returns false it responds with a 401 code.
 func VerifyTokens(v TokenValidator, h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if token := getToken(r); !v.ValidToken(token) {
@@ -36,7 +36,8 @@ func Forbidden(w http.ResponseWriter) {
 	http.Error(w, "Forbidden", http.StatusForbidden)
 }
 
-// GetToken
+// getToken pulls the token from the Basic Auth Header.
+// It assumes that it is the username
 func getToken(r *http.Request) (token string) {
 	token, _, _ = r.BasicAuth()
 	return token
