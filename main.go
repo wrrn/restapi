@@ -37,25 +37,6 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// Login
-	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		if !request.Is(r, "POST") {
-			response.MethodNotAllowed(w)
-			return
-		}
-		authentication.HandleLogin(w, r)
-		return
-	})
-
-	//Logout
-	mux.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
-		if !request.Is(r, "POST") {
-			response.MethodNotAllowed(w)
-			return
-		}
-		authentication.HandleLogout(w, r)
-	})
-
 	mux.Handle("/configurations/", http.StripPrefix("/configurations", configHandler))
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
