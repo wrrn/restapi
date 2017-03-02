@@ -9,8 +9,6 @@ import (
 	"github.com/warrenharper/restapi/auth"
 	"github.com/warrenharper/restapi/configuration"
 	"github.com/warrenharper/restapi/configuration/confighandler"
-	"github.com/warrenharper/restapi/utils/request"
-	"github.com/warrenharper/restapi/utils/response"
 )
 
 func SetupDB() *sql.DB {
@@ -26,14 +24,13 @@ func SetupDB() *sql.DB {
 
 func main() {
 	var (
-		db                          = SetupDB()
-		authentication *auth.Auth   = &auth.Auth{db}
-		configHandler  http.Handler = confighandler.Handler{
+		db                         = SetupDB()
+		configHandler http.Handler = confighandler.Handler{
 			configuration.ConfigurationController{db},
 		}
 	)
 
-	configHandler = authentication.VerifySessions(configHandler)
+	configHandler = tokens.ValidateTokens(auth.Auth{db}, configHandler)
 
 	mux := http.NewServeMux()
 
