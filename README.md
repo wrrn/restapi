@@ -3,12 +3,12 @@ Configuration REST API
 
 ## Installation
 1. Install postgres
-2. Add user ```tenable``` with password ```insecure```
+2. Add a user to postgres
 3. Create database ```restapi```
 3. Install the server (this will install binary in your $GOPATH/bin directory)
 ```go get -u github.com/warrenharper/restapi```
 4. Run the sql script located in github.com/warrenharper/restapi/env/create_db.sql
-```psql -U tenable -d restapi -a -f env/create_db.sql -h localhost```
+```psql -U USERNAME -d DATABASENAME -a -f env/create_db.sql -h localhost```
 
 ## Running
 Assuming $GOPATH/bin is in your path you can just run ```restapi```. This will start the server on port 8080.
@@ -25,51 +25,10 @@ GOOS=linux GOARCH=amd64 go build
 
 #API
 ## Authentication
-### Log in
+Authentication is performed by HTTP Basic Auth. Place your API key in the basic auth
+username field.
 
-```
-POST /login
-```
-
-__Input__
-
-| parameter| Description |
-|-----------|------------|
-|"username"| __Required__: The username as a string |
-|"password"| __Required__: The password as a string |
-
-__Example__
-``` js
-{
-	"name": "john_doe",
-	"password": "password"
-}
-```
-
-__Response__
-
-| Status | Body |
-| ---- | ---- |
-| 200 | "Authorized"|
-| 401 | "Unauthorized" |
-
-### Log out
-
-``` bash
-POST /logout
-```
-__Input__
-This requires no input
-
-__Response__
-
-| Status | Body |
-| ---- | ---- |
-| 200 | "Success"|
-
-
-#### __Note:__ If you are not authenticated you will receive a status code of 403 when you try to access anything
-
+If authentication fails you will get a response with a 401 status code.
 
 ## Configuration
 ### List configurations
