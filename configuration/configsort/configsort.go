@@ -3,7 +3,7 @@ package configsort
 import (
 	"sort"
 
-	"github.com/warrenharper/restapi/configuration"
+	"github.com/wrrn/restapi/configuration"
 )
 
 type Orderer func(i, j int) bool

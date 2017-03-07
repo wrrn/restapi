@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/warrenharper/restapi/configuration"
-	"github.com/warrenharper/restapi/configuration/configsort"
-	"github.com/warrenharper/restapi/utils/request"
-	"github.com/warrenharper/restapi/utils/response"
+	"github.com/wrrn/restapi/configuration"
+	"github.com/wrrn/restapi/configuration/configsort"
+	"github.com/wrrn/restapi/utils/request"
+	"github.com/wrrn/restapi/utils/response"
 )
 
 type Handler struct {

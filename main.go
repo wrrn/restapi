@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	_ "github.com/lib/pq"
-	"github.com/warrenharper/restapi/auth"
-	"github.com/warrenharper/restapi/configuration"
-	"github.com/warrenharper/restapi/configuration/confighandler"
+	"github.com/wrrn/restapi/auth"
+	"github.com/wrrn/restapi/configuration"
+	"github.com/wrrn/restapi/configuration/confighandler"
 )
 
 func SetupDB() *sql.DB {
