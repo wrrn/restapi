@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"log"
 	"net/http"
 
@@ -28,14 +29,17 @@ func main() {
 		configHandler http.Handler = confighandler.Handler{
 			configuration.ConfigurationController{db},
 		}
+		port       port = 80
 	)
 
+	flag.Var(&port, "port", "Port for server to listen on")
+	flag.Parse()
 	configHandler = auth.Auth{db}.ValidateTokens(configHandler)
 
 	mux := http.NewServeMux()
 
 	mux.Handle("/configurations/", http.StripPrefix("/configurations", configHandler))
 
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	log.Fatal(http.ListenAndServe(":"+port.String(), mux))
 
 }
