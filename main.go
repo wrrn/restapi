@@ -7,33 +7,37 @@ import (
 	"net/http"
 
 	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/wrrn/restapi/auth"
 	"github.com/wrrn/restapi/configuration"
 	"github.com/wrrn/restapi/configuration/confighandler"
 )
 
-func SetupDB() *sql.DB {
-	db, err := sql.Open("postgres", "user=tenable password=insecure dbname=restapi")
+func setupDB(driver, dataSource string) *sql.DB {
+	db, err := sql.Open(driver, dataSource)
 	if err != nil {
 		log.Fatal(err)
 	}
-	db.Exec("DELETE FROM users")
-	db.Exec("DELETE FROM configuration")
-	db.Exec("DELETE FROM sessions")
 	return db
 }
 
 func main() {
 	var (
-		db                         = SetupDB()
-		configHandler http.Handler = confighandler.Handler{
-			configuration.ConfigurationController{db},
-		}
+		driver     string
+		dataSource string
 		port       port = 80
 	)
 
+	flag.StringVar(&driver, "db-driver", "", "The driver to use: sqlite3 or postgres")
+	flag.StringVar(&dataSource, "db-source", "", "Database source configurations. (Could contain username, password, and database name)")
 	flag.Var(&port, "port", "Port for server to listen on")
 	flag.Parse()
+	db := setupDB(driver, dataSource)
+
+	var configHandler http.Handler = confighandler.Handler{
+		configuration.ConfigurationController{db},
+	}
+
 	configHandler = auth.Auth{db}.ValidateTokens(configHandler)
 
 	mux := http.NewServeMux()
