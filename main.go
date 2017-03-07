@@ -30,7 +30,7 @@ func main() {
 		}
 	)
 
-	configHandler = tokens.ValidateTokens(auth.Auth{db}, configHandler)
+	configHandler = auth.Auth{db}.ValidateTokens(configHandler)
 
 	mux := http.NewServeMux()
 

@@ -3,6 +3,9 @@ package auth
 import (
 	"database/sql"
 	"errors"
+	"net/http"
+
+	"github.com/wrrn/token"
 )
 
 var (
@@ -26,4 +29,8 @@ func (a Auth) ValidToken(t string) bool {
                        ON token.user_id = user_account.id
                        WHERE token.token = ?`, t).Scan(&count)
 	return err == nil && count > 0
+}
+
+func (a Auth) ValidateTokens(h http.Handler) http.Handler {
+	return token.ValidateTokens(a, h)
 }
